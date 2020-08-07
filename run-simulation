@@ -13,13 +13,34 @@ import matplotlib.pyplot as plt
 # The default initial population of the environment in the
 # simulation.
 #
-DEFAULT_INITIAL_POPULATION = 275000
+# This is set to 250,000 per the initial conditions set
+# forth in the project instructions.
+#
+DEFAULT_INITIAL_POPULATION = 250000
 #
 # Default Simulation Iterations
 #
 # The default number of simulation iterations to carry out.
 #
 DEFAULT_SIMULATION_ITERATIONS = 72
+#
+# Default Target Population Level
+#
+# The goal population level of the simulation scenario.
+#
+# This is set to 85,000 as per the final project parameters.
+#
+DEFAULT_TARGET_POPULATION_LEVEL = 85000
+#
+# Default Target Population Level
+#
+# The default goal population level of the simulation
+# scenario.
+#
+# This is set to 275,000 as a rough estimate of the Canada
+# goose population carrying capacity of New York State.
+#
+DEFAULT_CARRYING_CAPACITY = 275000
 
 ############################################################
 #
@@ -39,6 +60,20 @@ initialPopulation = DEFAULT_INITIAL_POPULATION
 # The number of simulation iterations to carry out.
 #
 simulationIterations = DEFAULT_SIMULATION_ITERATIONS
+#
+# Target Population Level
+#
+# The goal population level of the simulation scenario.
+#
+targetPopulationLevel = DEFAULT_TARGET_POPULATION_LEVEL
+#
+# Carrying Capacity
+#
+# The environmental carrying capacity. Note: This parameter
+# has the strongest influence on the population growth rate
+# in the canonical logistic growth model.
+#
+carryingCapacity = DEFAULT_CARRYING_CAPACITY
 
 ############################################################
 #
@@ -66,6 +101,18 @@ ax, fig = plt.subplots()
 # Plot the simulation results.
 #
 plot = plt.plot([ i for i in range(simulationIterations) ], [ 100 for i in range(simulationIterations) ])
+#
+# Plot the target population level on the graph.
+#
+plt.plot([ i for i in range(simulationIterations)], [ targetPopulationLevel for i in range(simulationIterations) ], color='darkgreen')
+#
+# Plot the carrying capacity level on the graph.
+#
+plt.plot([ i for i in range(simulationIterations)], [ carryingCapacity for i in range(simulationIterations) ], color='red')
+#
+# Display grid lines.
+#
+plt.grid(True)
 #
 # Set the title of the graph.
 #
