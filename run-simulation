@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+
+import matplotlib.pyplot as plt
+
+############################################################
+#
+#              Default Simulation Parameters
+#
+############################################################
+#
+# Default Initial Population
+#
+# The default initial population of the environment in the
+# simulation.
+#
+DEFAULT_INITIAL_POPULATION = 275000
+#
+# Default Simulation Iterations
+#
+# The default number of simulation iterations to carry out.
+#
+DEFAULT_SIMULATION_ITERATIONS = 72
+
+############################################################
+#
+#                  Simulation Parameters
+#
+############################################################
+#
+# Initial Population
+#
+# The initial population of the environment in the
+# simulation.
+#
+initialPopulation = DEFAULT_INITIAL_POPULATION
+#
+# Simulation Iterations
+#
+# The number of simulation iterations to carry out.
+#
+simulationIterations = DEFAULT_SIMULATION_ITERATIONS
+
+############################################################
+#
+#                  Simulation Execution
+#
+############################################################
+#
+# Execute the simulation.
+#
+print("testing...")
+
+############################################################
+#
+#               Results Report Generation
+#
+############################################################
+#
+# Having carried out the simulation, generate the graph of
+# the population level at each simulation iteration.
+#
+# Create graph objects for the axes and the figure itself.
+#
+ax, fig = plt.subplots()
+#
+# Plot the simulation results.
+#
+plot = plt.plot([ i for i in range(simulationIterations) ], [ 100 for i in range(simulationIterations) ])
+#
+# Set the title of the graph.
+#
+plt.title("Simulated Monthly Geese Population in New York State")
+#
+# Set the x-axis label.
+#
+plt.xlabel("Month")
+#
+# Set the y-axis label.
+#
+plt.ylabel("Canada Goose Population Level\n(Thousands)")
+#
+# Finally, display the graph.
+#
+plt.show()
