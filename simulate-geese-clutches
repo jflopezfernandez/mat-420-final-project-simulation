@@ -1,0 +1,8 @@
+#!/usr/bin/Rscript --vanilla
+
+avg.clutch.size <- 5
+sample.size     <- 10000000
+
+goose.clutches <- rpois(sample.size, avg.clutch.size)
+
+summary(goose.clutches)
