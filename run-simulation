@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+import argparse as argparse
+import math as math
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import numpy.random
 
 ############################################################
 #
@@ -42,6 +45,91 @@ DEFAULT_TARGET_POPULATION_LEVEL = 85000
 # goose population carrying capacity of New York State.
 #
 DEFAULT_CARRYING_CAPACITY = 275000
+#
+# Default Growth Rate
+#
+# The default growth rate of the population. The derivation
+# of this growth rate is non-trivial. See the paper for
+# details.
+#
+DEFAULT_GROWTH_RATE = 1.00685
+#
+# Default Monthly Harvest Rate
+#
+# The default rate at which geese can be harvested. Note
+# well that this is an average, and the corresponding
+# standard deviation must be configured as well.
+#
+DEFAULT_MONTHLY_HARVEST_RATE_AVG = 16000
+#
+# Default Monthly Harvest Standard Deviation
+#
+# The standard deviation of the number of geese harvested in
+# a given month.
+#
+DEFAULT_MONTHLY_HARVEST_RATE_STDDEV = 5000
+#
+# Default Maximum Harvest Rate
+#
+# This is the default cap on the monthly harvest rate. This
+# parameter sets a hard limit on the number of geese that
+# may be harvested in a given month to reflect realistic
+# resource limitations.
+#
+DEFAULT_MONTHLY_HARVEST_CAP = 50000
+
+############################################################
+#
+#                  Command-Line Arguments
+#
+############################################################
+#
+# Define an argument parser object to configure.
+#
+parser = argparse.ArgumentParser(
+    description='Canada Goose Population Simulation')
+#
+# Add an argument for the number of simulation iterations to
+# run.
+#
+parser.add_argument('--iterations',
+    type=int,
+    default=DEFAULT_SIMULATION_ITERATIONS,
+    help='The number of simulation iterations to simulate')
+#
+# Add an argument for configuring the initial population
+# level at time t=0.
+#
+parser.add_argument('--initial-population',
+    type=int,
+    default=DEFAULT_INITIAL_POPULATION,
+    help='The initial population level')
+#
+# Add a carrying capacity argument.
+#
+parser.add_argument('--carrying-capacity',
+    type=int,
+    default=DEFAULT_CARRYING_CAPACITY,
+    help='The environment\'s carrying capacity')
+#
+# Add an average monthly harvest rate argument.
+#
+parser.add_argument('--monthly-harvest-rate',
+    type=int,
+    default=DEFAULT_MONTHLY_HARVEST_RATE_AVG,
+    help='The average number of geese harvested per month')
+#
+#
+#
+parser.add_argument('--monthly-harvest-limit',
+    type=int,
+    default=DEFAULT_MONTHLY_HARVEST_CAP,
+    help='The absolute upper-limit on the amount of geese that may be harvested per month')
+#
+# Parse command-line arguments to initialize the simulation
+# parameters.
+#
+args = parser.parse_args()
 
 ############################################################
 #
@@ -60,7 +148,7 @@ initialPopulation = DEFAULT_INITIAL_POPULATION
 #
 # The number of simulation iterations to carry out.
 #
-simulationIterations = DEFAULT_SIMULATION_ITERATIONS
+simulationIterations = args.iterations
 #
 # Target Population Level
 #
@@ -74,7 +162,35 @@ targetPopulationLevel = DEFAULT_TARGET_POPULATION_LEVEL
 # has the strongest influence on the population growth rate
 # in the canonical logistic growth model.
 #
-carryingCapacity = DEFAULT_CARRYING_CAPACITY
+carryingCapacity = args.carrying_capacity
+#
+# Growth Rate
+#
+# The growth rate of the population.
+#
+growthRate = DEFAULT_GROWTH_RATE
+#
+# Monthly Harvest Rate
+#
+# The default rate at which geese can be harvested. Note
+# well that this is an average, and the corresponding
+# standard deviation must be configured as well.
+#
+averageMonthlyHarvestRate = args.monthly_harvest_rate
+#
+# Monthly Harvest Standard Deviation
+#
+# The standard deviation of the number of geese harvested in
+# a given month.
+#
+monthlyHarvestRateStdDev = DEFAULT_MONTHLY_HARVEST_RATE_STDDEV
+#
+# Monthly Harvest Limit
+#
+# The upper limit on the number of geese that may be
+# harvested.
+#
+monthlyHarvestRateCap = args.monthly_harvest_limit
 
 ############################################################
 #
@@ -100,6 +216,29 @@ currentPopulation = initialPopulation
 # level.
 #
 populationLevel = [ currentPopulation ]
+#
+# Current Month
+#
+# The current month in the year. This global variable keeps
+# track of the year, as the number of geese that can be
+# harvested per month greatly depends on the number of geese
+# present in the environment.
+#
+currentMonth = 0
+#
+# Maximum Population Level
+#
+# This variable is used to dynamically set the limits of the
+# y axis.
+#
+maximumPopulationLevel = initialPopulation
+#
+# Iterations Survived
+#
+# This variable is used to dynamically set the limits of the
+# x axis.
+#
+iterationsSurvived = 0
 
 ############################################################
 #
@@ -107,8 +246,75 @@ populationLevel = [ currentPopulation ]
 #
 ############################################################
 #
+# GeeseHarvested
+#
+# This function calculates the number of geese harvested
+# during the given month of the year.
+#
+def GeeseHarvested(currentMonth):
+    global averageMonthlyHarvestRate
+    global monthlyHarvestRateStdDev
+
+    geeseHarvested = math.fabs((averageMonthlyHarvestRate / 2.0) + (math.sin((currentMonth * math.pi) / 6.0) * numpy.random.default_rng().normal(averageMonthlyHarvestRate,monthlyHarvestRateStdDev,1)[0]))
+
+    # DEBUG: Print the number of geese harvested.
+    # print(f"Geese harvested: {geeseHarvested}")
+
+    return geeseHarvested
+#
+#
+#
 def NextPopulationLevel(previousPopulationLevel):
-    return previousPopulationLevel * .997
+    global growthRate
+    global carryingCapacity
+    global currentMonth
+    global monthlyHarvestRateCap
+
+    # Increment the current month.
+    currentMonth = (currentMonth + 1) if currentMonth < 12 else 0
+
+    # If the previous population level was zero, skip all
+    # the calculations and simply return a zero.
+    if previousPopulationLevel == 0:
+        return 0
+    
+    # Initialize the population change variable.
+    populationChange = 0
+
+    # If we are in mating season, calculate the population
+    # change due to natural population growth.
+    if currentMonth >= 3 and currentMonth <= 5:
+        populationChange = growthRate * previousPopulationLevel * (1.0 - (previousPopulationLevel / carryingCapacity))
+
+    # Calculate the theoretical number of geese harvested.
+    theoreticalNumberOfGeeseHarvested = GeeseHarvested(currentMonth)
+
+    # Make sure the actual number of geese harvested is realistic.
+    geeseHarvested = theoreticalNumberOfGeeseHarvested if theoreticalNumberOfGeeseHarvested < monthlyHarvestRateCap else monthlyHarvestRateCap
+
+    # Incorporate the number of harvested geese into the
+    # population change.
+    populationChange -= geeseHarvested
+
+    # Calculate the net population change.
+    currentPopulationLevel = previousPopulationLevel + populationChange
+
+    # Add or subtract a random number of geese from the
+    # population level to reflect the inherent uncertainty
+    # in the current population count.
+    populationCountError = numpy.random.default_rng().normal(0, 1000, 1)[0]
+
+    # DEBUG: Log the population count error.
+    # print(f"Population count error: {populationCountError}")
+
+    # Incorporate the error into the population count.
+    currentPopulationLevel += populationCountError
+
+    # Normalize the population level to make sure that it
+    # never falls below zero.
+    currentPopulationLevel = currentPopulationLevel if currentPopulationLevel >= 0 else 0
+
+    return currentPopulationLevel
 
 ############################################################
 #
@@ -119,7 +325,26 @@ def NextPopulationLevel(previousPopulationLevel):
 # Execute the simulation.
 #
 for i in range(simulationIterations):
-    populationLevel += [ NextPopulationLevel(populationLevel[len(populationLevel)-1]) ]
+    # Get the previous population level.
+    previousPopulationLevel = populationLevel[-1]
+
+    # If the population is not currently extinct, increment
+    # the number of iterations it has survived.
+    iterationsSurvived = (iterationsSurvived + 1) if previousPopulationLevel > 0 else iterationsSurvived
+
+    # Calculate the next population level based on the
+    # current simulation state.
+    populationLevel += [ NextPopulationLevel(previousPopulationLevel) ]
+    
+    # Get the current population level.
+    currentPopulationLevel = populationLevel[-1]
+
+    # Update the maximum population level, if necessary.
+    maximumPopulationLevel = currentPopulationLevel if currentPopulationLevel > maximumPopulationLevel else maximumPopulationLevel
+
+    # DEBUG: Log the current population level.
+    # print(f"{i+1} Current population level: {currentPopulationLevel}")
+
 
 ############################################################
 #
@@ -156,7 +381,7 @@ plt.xlabel("Month")
 # simulation iterations plus one, to make sure we can fit
 # all of the data comfortably.
 #
-plt.xlim(0, simulationIterations)
+plt.xlim(0, iterationsSurvived)
 #
 # Configure the limits of the y axis to span a population
 # level of zero to the maximum population level needed to
@@ -166,7 +391,7 @@ plt.xlim(0, simulationIterations)
 # depending on the maximum populuation level reached during
 # the simulation.
 #
-plt.ylim(0, carryingCapacity + 10000)
+plt.ylim(0, maximumPopulationLevel + 10000)
 #
 # Set the y-axis label.
 #
