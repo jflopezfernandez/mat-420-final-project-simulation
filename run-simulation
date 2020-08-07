@@ -283,6 +283,9 @@ def NextPopulationLevel(previousPopulationLevel):
 
     # If we are in mating season, calculate the population
     # change due to natural population growth.
+    #
+    # Note: The Canada goose mating season is only from
+    # March to May.
     if currentMonth >= 3 and currentMonth <= 5:
         populationChange = growthRate * previousPopulationLevel * (1.0 - (previousPopulationLevel / carryingCapacity))
 
